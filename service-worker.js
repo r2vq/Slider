@@ -1,4 +1,4 @@
-const cacheName = 'canvas-game-v1';
+const cacheName = 'canvas-game-v0.0.0';
 const staticAssets = [
     './',
     './index.html',
