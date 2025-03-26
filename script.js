@@ -13,8 +13,13 @@ const blockers = [];
 // Animation variables
 let targetX = circleX;
 let targetY = circleY;
-let animationProgress = 1;
-const animationSpeed = 0.1;
+let animationProgress = 0;
+const animationDuration = 300;
+let startTime = 0;
+
+// Load image
+const playerImage = new Image();
+playerImage.src = 'pokeball.png';
 
 // Initialize grid, place circle, place blockers (same as before)
 for (let row = 0; row < gridSize; row++) {
@@ -54,11 +59,13 @@ function drawGrid() {
     const animatedX = circleX * cellSize + (targetX - circleX) * animationProgress * cellSize;
     const animatedY = circleY * cellSize + (targetY - circleY) * animationProgress * cellSize;
 
-    ctx.beginPath();
-    ctx.arc(animatedX + cellSize / 2, animatedY + cellSize / 2, cellSize / 3, 0, Math.PI * 2);
-    ctx.fillStyle = 'white';
-    ctx.fill();
-    ctx.closePath();
+    ctx.drawImage(
+        playerImage,
+        animatedX,
+        animatedY,
+        cellSize,
+        cellSize
+    );
 }
 
 function moveCircle(dx, dy) {
@@ -78,12 +85,21 @@ function moveCircle(dx, dy) {
         }
     }
     animationProgress = 0;
+    startTime = 0; // reset for next animation
+    requestAnimationFrame(animateSlide); // Start the animation
 }
 
-function animateSlide() {
+function animateSlide(timestamp) {
+    if (!startTime) {
+        startTime = timestamp;
+    }
+
+    const elapsed = timestamp - startTime;
+    animationProgress = Math.min(elapsed / animationDuration, 1);
+
+    drawGrid();
+
     if (animationProgress < 1) {
-        animationProgress += animationSpeed;
-        drawGrid();
         requestAnimationFrame(animateSlide);
     } else {
         circleX = targetX;
@@ -91,21 +107,19 @@ function animateSlide() {
         grid[circleY][circleX] = 2;
         grid[circleY - (targetY - circleY)][circleX - (targetX - circleX)] = 0;
         animationProgress = 1;
-        drawGrid();
+        startTime = 0;
         requestAnimationFrame(update);
     }
 }
 
 function update() {
     drawGrid();
-    if (animationProgress < 1) {
-        animateSlide();
-    } else {
-        requestAnimationFrame(update);
-    }
+    requestAnimationFrame(update);
 }
 
-update();
+playerImage.onload = () => {
+    update();
+};
 
 // Handle swipe events
 const hammer = new Hammer(canvas);
