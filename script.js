@@ -3,9 +3,52 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const gridSize = 5;
-const cellSize = Math.min(canvas.width, canvas.height) / gridSize;
-const grid = [];
+const gridsGrass = [
+    [
+        [0, 0, 0, 0, 0, 0, 1],
+        [0, 1, 0, 1, 1, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 1, 0, 1],
+        [0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0],
+        [1, 1, 1, 1, 0, 0, 0],
+        [2, 0, 0, 0, 0, 1, 1],
+    ],
+    [
+        [1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1],
+        [0, 0, 1, 0, 0, 0, 0],
+        [0, 1, 1, 0, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0, 1],
+        [2, 0, 0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1, 0, 0],
+    ],
+    [
+        [0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 1, 1, 1, 0, 0],
+        [1, 0, 0, 1, 1, 1, 1, 1, 0],
+        [1, 0, 0, 0, 1, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0, 1],
+        [0, 0, 1, 0, 1, 1, 1, 0, 1],
+        [0, 1, 1, 0, 1, 1, 1, 0, 1],
+        [0, 1, 1, 0, 0, 1, 1, 0, 1],
+        [0, 1, 1, 1, 0, 0, 0, 0, 0],
+        [2, 0, 0, 1, 0, 1, 1, 0, 0],
+        [1, 1, 0, 0, 0, 1, 1, 1, 0],
+    ],
+];
+
+const grid = gridsGrass[Math.floor(Math.random() * 3)];
+
+const gridWidth = grid[0].length;
+const gridHeight = grid.length;
+const cellSize = Math.min(canvas.width, canvas.height) / Math.max(gridWidth, gridHeight); // Adjust cellSize
+
+const wallColor = '#52bb44';
+const groundColor = '#8f5829';
+
 let circleX = 0;
 let circleY = 0;
 const blockers = [];
@@ -21,37 +64,27 @@ let startTime = 0;
 const playerImage = new Image();
 playerImage.src = 'pokeball.png';
 
-// Initialize grid, place circle, place blockers (same as before)
-for (let row = 0; row < gridSize; row++) {
-    grid[row] = [];
-    for (let col = 0; col < gridSize; col++) {
-        grid[row][col] = 0;
+for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[row].length; col++) {
+        if (grid[row][col] === 1) {
+            blockers.push( { row, col });
+        } else if (grid[row][col] === 2) {
+            circleX = col;
+            circleY = row;
+        }
     }
-}
-
-grid[circleY][circleX] = 2;
-
-const numBlockers = 5;
-for (let i = 0; i < numBlockers; i++) {
-    let row, col;
-    do {
-        row = Math.floor(Math.random() * gridSize);
-        col = Math.floor(Math.random() * gridSize);
-    } while (grid[row][col] !== 0);
-    grid[row][col] = 1;
-    blockers.push({ row, col });
 }
 
 function drawGrid() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let row = 0; row < gridSize; row++) {
-        for (let col = 0; col < gridSize; col++) {
-            ctx.strokeStyle = 'gray';
-            ctx.strokeRect(col * cellSize, row * cellSize, cellSize, cellSize);
-
+    for (let row = 0; row < gridHeight; row++) {
+        for (let col = 0; col < gridWidth; col++) {
             if (grid[row][col] === 1) {
-                ctx.fillStyle = 'red';
-                ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                ctx.fillStyle = wallColor;
+                ctx.fillRect(col * cellSize, row * cellSize, cellSize + 1, cellSize + 1);
+            } else {
+                ctx.fillStyle = groundColor;
+                ctx.fillRect(col * cellSize, row * cellSize, cellSize + 1, cellSize + 1);
             }
         }
     }
@@ -77,7 +110,7 @@ function moveCircle(dx, dy) {
         const newX = targetX + dx;
         const newY = targetY + dy;
 
-        if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize && grid[newY][newX] !== 1) {
+        if (newX >= 0 && newX < gridWidth && newY >= 0 && newY < gridHeight && grid[newY][newX] !== 1) {
             targetX = newX;
             targetY = newY;
         } else {
@@ -85,8 +118,8 @@ function moveCircle(dx, dy) {
         }
     }
     animationProgress = 0;
-    startTime = 0; // reset for next animation
-    requestAnimationFrame(animateSlide); // Start the animation
+    startTime = 0;
+    requestAnimationFrame(animateSlide);
 }
 
 function animateSlide(timestamp) {
